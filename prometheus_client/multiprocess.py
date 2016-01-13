@@ -316,7 +316,6 @@ class UWSGICollector(PartitionedCollector):
         import uwsgi
 
         workers = uwsgi.workers()
-        resolution = 100000000000000.0
 
         raw = []
         keys = uwsgi.cache_keys()
@@ -333,7 +332,7 @@ class UWSGICollector(PartitionedCollector):
                     collect_mode = parts[1]
                     partition = parts[2]
 
-                value = uwsgi.cache_num(key) / resolution
+                value = float(uwsgi.cache_get(key))
                 payload = dict(
                     key=encoded_key,
                     kind=kind,

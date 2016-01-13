@@ -305,7 +305,6 @@ def _UWSGIValue(pid=os.getpid()):
         _multiprocess = True
 
         def __init__(self, typ, metric_name, name, labelnames, labelvalues, multiprocess_mode='', **kwargs):
-            self._resolution = 100000000000000
 
             with _lock:
                 encoded = json.dumps((metric_name, name, labelnames, labelvalues))
@@ -314,21 +313,22 @@ def _UWSGIValue(pid=os.getpid()):
                     self._key = "prometheus_{}_{}_{}-{}".format(typ, multiprocess_mode, pid, encoded)
 
                 if not uwsgi.cache_exists(self._key):
-                    uwsgi.cache_inc(self._key, 0)
+                    uwsgi.cache_set(self._key, str(0.0))
 
         def inc(self, amount):
+            amount = float(amount)
             with _lock:
-                uwsgi.cache_inc(self._key, int(amount * self._resolution))
+                current = float(uwsgi.cache_get(self._key))
+                uwsgi.cache_update(self._key, str(current + amount))
 
         def set(self, value):
+            value = float(value)
             with _lock:
-                current = uwsgi.cache_num(self._key)
-                value_ = int(value * self._resolution)
-                uwsgi.cache_inc(self._key, value_ - current)
+                uwsgi.cache_update(self._key, str(value))
 
         def get(self):
             with _lock:
-                return uwsgi.cache_num(self._key) / self._resolution
+                return float(uwsgi.cache_get(self._key))
 
     return UWSGIValue
 

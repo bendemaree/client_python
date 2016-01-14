@@ -297,15 +297,14 @@ def _ShelveValue(__pid=os.getpid()):
     return ShelveValue
 
 
-def _UWSGIValue(pid=os.getpid()):
+def _UWSGIValue():
     _lock = Lock()
 
     class UWSGIValue(_PartitionedValue):
-
         _multiprocess = True
 
         def __init__(self, typ, metric_name, name, labelnames, labelvalues, multiprocess_mode='', **kwargs):
-
+            pid = os.getpid()
             with _lock:
                 encoded = json.dumps((metric_name, name, labelnames, labelvalues))
                 self._key = "prometheus_{}_{}-{}".format(typ, pid, encoded)
